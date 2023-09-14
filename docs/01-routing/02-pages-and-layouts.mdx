@@ -1,0 +1,203 @@
+---
+title: Pages and Layouts
+description: Create your first page and shared layout with the App Router.
+---
+
+> We recommend reading the [Routing Fundamentals](/docs/app/building-your-application/routing) and [Defining Routes](/docs/app/building-your-application/routing/defining-routes) pages before continuing.
+
+The App Router inside Next.js 13 introduced new file conventions to easily create [pages](#pages), [shared layouts](#layouts), and [templates](#templates). This page will guide you through how to use these special files in your Next.js application.
+
+## Pages
+
+A page is UI that is **unique** to a route. You can define pages by exporting a component from a `page.js` file. Use nested folders to [define a route](/docs/app/building-your-application/routing/defining-routes) and a `page.js` file to make the route publicly accessible.
+
+Create your first page by adding a `page.js` file inside the `app` directory:
+
+<Image
+  alt="page.js special file"
+  srcLight="/docs/light/page-special-file.png"
+  srcDark="/docs/dark/page-special-file.png"
+  width="1600"
+  height="444"
+/>
+
+```tsx filename="app/page.tsx" switcher
+// `app/page.tsx` is the UI for the `/` URL
+export default function Page() {
+  return <h1>Hello, Home page!</h1>;
+}
+```
+
+```jsx filename="app/page.js" switcher
+// `app/page.js` is the UI for the `/` URL
+export default function Page() {
+  return <h1>Hello, Home page!</h1>;
+}
+```
+
+```tsx filename="app/dashboard/page.tsx" switcher
+// `app/dashboard/page.tsx` is the UI for the `/dashboard` URL
+export default function Page() {
+  return <h1>Hello, Dashboard Page!</h1>;
+}
+```
+
+```jsx filename="app/dashboard/page.js" switcher
+// `app/dashboard/page.js` is the UI for the `/dashboard` URL
+export default function Page() {
+  return <h1>Hello, Dashboard Page!</h1>;
+}
+```
+
+> **Good to know**:
+>
+> - A page is always the [leaf](/docs/app/building-your-application/routing#terminology) of the [route subtree](/docs/app/building-your-application/routing#terminology).
+> - `.js`, `.jsx`, or `.tsx` file extensions can be used for Pages.
+> - A `page.js` file is required to make a route segment publicly accessible.
+> - Pages are [Server Components](/docs/getting-started/react-essentials) by default but can be set to a [Client Component](/docs/getting-started/react-essentials#client-components).
+> - Pages can fetch data. View the [Data Fetching](/docs/app/building-your-application/data-fetching) section for more information.
+
+## Layouts
+
+A layout is UI that is **shared** between multiple pages. On navigation, layouts preserve state, remain interactive, and do not re-render. Layouts can also be [nested](#nesting-layouts).
+
+You can define a layout by `default` exporting a React component from a `layout.js` file. The component should accept a `children` prop that will be populated with a child layout (if it exists) or a child page during rendering.
+
+<Image
+  alt="layout.js special file"
+  srcLight="/docs/light/layout-special-file.png"
+  srcDark="/docs/dark/layout-special-file.png"
+  width="1600"
+  height="606"
+/>
+
+```tsx filename="app/dashboard/layout.tsx" switcher
+export default function DashboardLayout({
+  children, // will be a page or nested layout
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      {/* Include shared UI here e.g. a header or sidebar */}
+      <nav></nav>
+
+      {children}
+    </section>
+  );
+}
+```
+
+> **Good to know**:
+>
+> - 最顶层的布局被称为根布局。这是一个必需的布局，它在应用程序的所有页面中共享。根布局必须包含 html 和 body 标签。
+> - 任何路由片段都可以选择性地定义自己的布局。这些布局将在该片段的所有页面中共享。
+> - 路由中的布局默认是嵌套的。每个父布局都使用 React 的 children 属性包装其内部的子布局。
+> - 你可以使用路由分组来选择性地应用和取消应用共享布局的特定路由片段。
+> - 默认情况下，布局是服务器组件，但可以设置为客户端组件。
+> - 布局可以获取数据。查看数据获取部分获取更多信息。
+> - 父布局和子布局之间无法直接传递数据。然而，你可以在路由中多次获取相同的数据，React 会自动去重请求，而不会影响性能。
+> - 布局无法访问当前的路由片段。为了访问路由片段，你可以在客户端组件中使用 useSelectedLayoutSegment 或 useSelectedLayoutSegments。
+> - `.js`, `.jsx`, `.tsx` 文件扩展名都是可以的
+> - `layout.js` and `page.js` 文件可以在同一个文件夹中定义. 布局将包裹页面.
+
+### Root Layout (Required)
+
+根布局是在 app 目录的顶层定义的，并适用于所有路由。这个布局允许你修改服务器返回的初始 HTML 内容。
+
+```tsx filename="app/layout.tsx" switcher
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+````
+
+> **Good to know**:
+>
+> - app目录必须包含一个根布局
+> - 根布局必须定义<html>和<body>标签，因为Next.js不会自动创建它们。
+> - 你可以使用内置的SEO支持来管理<head> HTML元素，例如<title>元素。
+> - 你可以使用路由分组来创建多个根布局。
+> - 根布局默认是服务器组件，不能设置成客户端组件。
+
+### Nesting Layouts
+
+通过将布局文件放置在特定的文件夹中，你可以将它们与对应的路由片段关联起来。当路由片段处于活动状态时，这些布局将被渲染。默认情况下，布局之间是嵌套关系，父布局通过children属性包装子布局，以实现层级的布局效果。
+
+```tsx filename="app/dashboard/layout.tsx" switcher
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <section>{children}</section>;
+}
+````
+
+> **Good to know**:
+>
+> - 只有 root 的 layout 可以包含 `<html>` 和 `<body>` 标签.
+
+如果你想结合上述的两种 layout,根 layout 应该包裹 dashboard layout
+
+The two layouts would be nested as such:
+
+你可以使用 Route Groups 来选择性地将特定的路由段包含或排除在共享布局中。
+
+## Templates
+
+模板（Templates）和布局（Layouts）类似，它们都包装每个子布局或页面。但与布局不同的是，模板会在导航时为每个子组件创建一个新的实例。这意味着当用户在共享模板的路由之间导航时，组件的新实例会被挂载，DOM 元素会被重新创建，状态不会被保留，并且效果会重新同步。
+
+在某些情况下，你可能需要这些特定的行为，此时模板会比布局更适合。例如：
+
+- css 的进出动画
+- 一些依赖 useState,useEffect 的特性
+  通过使用模板，你可以更改框架的默认行为，并根据需要自定义路由之间的加载和显示行为。这对于需要在每次导航时展示 fallback 的情况非常有用。
+
+> **Recommendation:** 除非你有特别的目的,我们更推荐使用 layout
+
+模版可以通过定义一个默认到处 React 组件的名为`template.js`的文件,该组件应该接受一个 children 属性用来嵌套路由片段
+
+```tsx filename="app/template.tsx" switcher
+export default function Template({ children }: { children: React.ReactNode }) {
+  return <div>{children}</div>;
+}
+```
+
+具有布局和模板的渲染结果输出如下所示：
+
+```jsx filename="Output"
+<Layout>
+  {/* Note that the template is given a unique key. */}
+  <Template key={routeParam}>{children}</Template>
+</Layout>
+```
+
+## Modifying `<head>`
+
+在`app`文件路径中,如果想给<head>标签设置 title , meta 等信息, 你可以通过在 layout/page 文件中导出一个`metadata`对象或使用`generateMetadata`方法来定义 head 属性
+
+```tsx filename="app/page.tsx" switcher
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Next.js",
+};
+
+export default function Page() {
+  return "...";
+}
+```
+
+你不应该手动添加<head>标签，例如<title>和<meta>到根布局中。相反，你应该使用 Metadata API，它会自动处理高级需求，如流式传输和去重<head>元素。
+
+[Learn more about available metadata options in the API reference.](/docs/app/api-reference/functions/generate-metadata)

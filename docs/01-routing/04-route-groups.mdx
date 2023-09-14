@@ -1,0 +1,44 @@
+---
+title: Route Groups
+description: Route Groups can be used to partition your Next.js application into different sections.
+---
+
+在“app”目录中，嵌套文件夹通常映射到 URL 路径。但是，您可以将文件夹标记为**路由组**，以防止该文件夹包含在路由的 URL 路径中。
+这允许你组织你的路由片段和项目文件在一个逻辑组中,而不会影响 URL 路径
+
+Route groups are useful for:
+
+- [Organizing routes into groups](#organize-routes-without-affecting-the-url-path) e.g. by site section, intent, or team.
+- Enabling [nested layouts](/docs/app/building-your-application/routing/pages-and-layouts) in the same route segment level:
+  - [Creating multiple nested layouts in the same segment, including multiple root layouts](#creating-multiple-root-layouts)
+  - [Adding a layout to a subset of routes in a common segment](#opting-specific-segments-into-a-layout)
+
+## Convention
+
+路由组被创建在名称由括号括起来的文件夹中`(folderName)`
+
+## Examples
+
+### Organize routes without affecting the URL path
+
+为了在不影响 URL 的情况下组织路由，可以创建一个组来将相关的路由放在一起。括号中的文件夹名称将会从 URL 中省略掉（例如(marketing)或(shop)）。
+尽管`(marketing)`和`(shop)`内的路由共享相同的 URL 层次结构,但你可以通过在它们的文件夹中添加一个 layout.js 文件来为每个组创建不同的布局。
+
+### Opting specific segments into a layout
+
+要将特定的路由添加到布局中，可以创建一个新的路由组（例如(shop)）,并将共享相同布局的路由移动到该组中（例如 account 和 cart）,不在该组中的路由将不会共享该布局（例如 checkout）。
+
+### Creating multiple root layouts
+
+要创建多个根布局,要删除顶层的 layout.js 文件,并在每个路由组中添加一个 layout.js 文件.需要在每个根布局中添加<html>和<body>标签。
+
+在上例中,marketing 和 shop 拥有自己的根布局
+
+---
+
+> **Good to know**:
+>
+> - 路由组的命名除了用于组织之外.没有特殊意义,也不会影响 URL 路径
+> - 包含路由组的路由不应该解析为与其他路由相同的 URL 路径。例如，由于路由组不会影响 URL 结构，(marketing)/about/page.js 和(shop)/about/page.js 都将解析为/about 并导致错误。
+> - 如果您在没有顶级 layout.js 文件的情况下使用多个根布局，您的主页 page.js 文件应该在其中一个路由组中定义，例如：app/(marketing)/page.js。
+> - 在多个根布局之间进行导航将导致完整的页面加载（而不是客户端导航）。例如，从使用 app/(shop)/layout.js 的/cart 导航到使用 app/(marketing)/layout.js 的/blog 将导致完整的页面加载。这仅适用于多个根布局。

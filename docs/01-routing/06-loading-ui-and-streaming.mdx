@@ -1,0 +1,134 @@
+---
+title: Loading UI and Streaming
+description: Built on top of Suspense, Loading UI allows you to create a fallback for specific route segments, and automatically stream content as it becomes ready.
+---
+
+特殊文件 loading.js 帮助您使用 React Suspense 创建有意义的加载 UI。通过这个约定，您可以在路由片段的内容加载时显示来自服务器的即时加载状态。一旦渲染完成，新的内容会自动替换旧的内容。
+
+## Instant Loading States
+
+即时加载状态是在导航时立即显示的备用 UI。您可以预先渲染加载指示器，例如骨架屏和旋转器，或者未来屏幕的一个小而有意义的部分，例如封面照片、标题等。这有助于用户理解应用正在响应，并提供更好的用户体验。
+
+通过在文件夹里创建一个'loading.js'来添加 loading
+
+```tsx filename="app/dashboard/loading.tsx" switcher
+export default function Loading() {
+  // You can add any UI inside Loading, including a Skeleton.
+  return <LoadingSkeleton />;
+}
+```
+
+在同一个文件夹中，loading.js 将嵌套在 layout.js 中。它会自动把 page.js 文件及其下面的任何子组件包裹在一个 <Suspense> 边界内。
+
+
+> **Good to know**:
+> - 即使使用以服务器为中心的路由，导航也是即时的。
+> - 导航是可中断的，这意味着在导航到另一个路由之前，不需要等待当前路由的内容完全加载。
+> - 共享的布局在加载新的路由时仍保持可交互性.
+
+> **Recommendation:** 请使用 loading.js 约定来处理路由段（布局和页面），因为 Next.js 会对此功能进行优化。
+
+## Streaming with Suspense
+
+除了使用 loading.js，您还可以为自己的 UI 组件手动创建 Suspense 边界。应用程序路由器支持使用 Suspense 进行流式处理，适用于 Node.js 和 Edge 运行时。
+### What is Streaming?
+
+在学习React和Next.js中的流(Streaming)之前,理解服务端渲染(SSR)和它的局限性是有益的
+
+SSR时,在用户看见页面和页面可交互之前有一系列步骤要完成
+
+1. 首先,页面所需的所有的数据会从服务器获取完成
+2. 服务器接着会为页面渲染HTML
+3. 该页面所需的HTML,CSS,JS会被发往客户端
+4. 没有交互性的UI会通过生成出的HTML,CSS展示出来
+5. 最终React会激活页面赋予交互性
+
+These steps are sequential and blocking, meaning the server can only render the HTML for a page once all the data has been fetched. And, on the client, React can only hydrate the UI once the code for all components in the page has been downloaded.
+
+SSR with React and Next.js helps improve the perceived loading performance by showing a non-interactive page to the user as soon as possible.
+
+<Image
+  alt="Server Rendering without Streaming"
+  srcLight="/docs/light/server-rendering-without-streaming.png"
+  srcDark="/docs/dark/server-rendering-without-streaming.png"
+  width="1600"
+  height="748"
+/>
+
+However, it can still be slow as all data fetching on server needs to be completed before the page can be shown to the user.
+
+**Streaming** allows you to break down the page's HTML into smaller chunks and progressively send those chunks from the server to the client.
+
+<Image
+  alt="How Server Rendering with Streaming Works"
+  srcLight="/docs/light/server-rendering-with-streaming.png"
+  srcDark="/docs/dark/server-rendering-with-streaming.png"
+  width="1600"
+  height="785"
+/>
+
+This enables parts of the page to be displayed sooner, without waiting for all the data to load before any UI can be rendered.
+
+Streaming works well with React's component model because each component can be considered a chunk. Components that have higher priority (e.g. product information) or that don't rely on data can be sent first (e.g. layout), and React can start hydration earlier. Components that have lower priority (e.g. reviews, related products) can be sent in the same server request after their data has been fetched.
+
+<Image
+  alt="Chart showing Server Rendering with Streaming"
+  srcLight="/docs/light/server-rendering-with-streaming-chart.png"
+  srcDark="/docs/dark/server-rendering-with-streaming-chart.png"
+  width="1600"
+  height="730"
+/>
+
+Streaming is particularly beneficial when you want to prevent long data requests from blocking the page from rendering as it can reduce the [Time To First Byte (TTFB)](https://web.dev/ttfb/) and [First Contentful Paint (FCP)](https://web.dev/first-contentful-paint/). It also helps improve [Time to Interactive (TTI)](https://developer.chrome.com/en/docs/lighthouse/performance/interactive/), especially on slower devices.
+
+### Example
+
+`<Suspense>` works by wrapping a component that performs an asynchronous action (e.g. fetch data), showing fallback UI (e.g. skeleton, spinner) while it's happening, and then swapping in your component once the action completes.
+
+```tsx filename="app/dashboard/page.tsx" switcher
+import { Suspense } from "react";
+import { PostFeed, Weather } from "./Components";
+
+export default function Posts() {
+  return (
+    <section>
+      <Suspense fallback={<p>Loading feed...</p>}>
+        <PostFeed />
+      </Suspense>
+      <Suspense fallback={<p>Loading weather...</p>}>
+        <Weather />
+      </Suspense>
+    </section>
+  );
+}
+```
+
+```jsx filename="app/dashboard/page.js" switcher
+import { Suspense } from "react";
+import { PostFeed, Weather } from "./Components";
+
+export default function Posts() {
+  return (
+    <section>
+      <Suspense fallback={<p>Loading feed...</p>}>
+        <PostFeed />
+      </Suspense>
+      <Suspense fallback={<p>Loading weather...</p>}>
+        <Weather />
+      </Suspense>
+    </section>
+  );
+}
+```
+
+By using Suspense, you get the benefits of:
+
+1. **Streaming Server Rendering** - Progressively rendering HTML from the server to the client.
+2. **Selective Hydration** - React prioritizes what components to make interactive first based on user interaction.
+
+For more Suspense examples and use cases, please see the [React Documentation](https://react.dev/reference/react/Suspense).
+
+### SEO
+
+- Next.js will wait for data fetching inside [`generateMetadata`](/docs/app/api-reference/functions/generate-metadata) to complete before streaming UI to the client. This guarantees the first part of a streamed response includes `<head>` tags.
+- Since streaming is server-rendered, it does not impact SEO. You can use the [Mobile Friendly Test](https://search.google.com/test/mobile-friendly) tool from Google to see how your page appears to Google's web crawlers and view the serialized HTML ([source](https://web.dev/rendering-on-the-web/#seo-considerations)).
