@@ -10,11 +10,13 @@ export default defineUserConfig({
         children: [
           "/",
           {
-            text:'Routing',
+            text: "React Essentials",
+            link: "/0-ReactEssentials/index.md",
+          },
+          {
+            text: "Routing",
             link: "/01-routing/index.md",
-            children: [
-              "/01-routing/01-defining-routes.md"
-            ],
+            children: ["/01-routing/01-defining-routes.md"],
           },
         ],
       },
