@@ -10,7 +10,11 @@ export default defineUserConfig({
         children: [
           "/",
           {
-            text: "React Essentials",
+            text: "快速开始",
+            link:'/getting-started/index.md'
+          },
+          {
+            text: "React要素",
             link: "/0-ReactEssentials/index.md",
           },
           {
